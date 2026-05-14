@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NAND NOR XOR 퀴즈</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 760px;
+      background: #1f2937;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: #cbd5e1;
+      margin-bottom: 24px;
+    }
+
+    .quiz-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      color: #cbd5e1;
+    }
+
+    pre {
+      background: #020617;
+      border: 1px solid #334155;
+      padding: 18px;
+      border-radius: 14px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .option {
+      background: white;
+      color: #111827;
+    }
+
+    .option:hover {
+      background: #e5e7eb;
+    }
+
+    .correct {
+      background: #10b981 !important;
+      color: white;
+    }
+
+    .wrong {
+      background: #ef4444 !important;
+      color: white;
+    }
+
+    .result-box {
+      margin-top: 20px;
+      padding: 18px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      display: none;
+    }
+
+    .next-btn,
+    .restart-btn {
+      margin-top: 14px;
+      background: #f8fafc;
+      color: #111827;
+    }
+
+    .summary {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 20px;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 600px) {
+      .options {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>NAND · NOR · XOR 퀴즈</h1>
+    <p class="subtitle">헷갈리는 논리회로를 3지선다로 빠르게 연습해봅시다.</p>
+
+    <div id="quizArea">
+      <div class="quiz-info">
+        <span id="questionNumber"></span>
+        <span id="scoreText"></span>
+      </div>
+
+      <h2 id="questionTitle"></h2>
+      <pre id="questionCode"></pre>
+
+      <div class="options">
+        <button class="option" onclick="chooseAnswer('NAND')">NAND</button>
+        <button class="option" onclick="chooseAnswer('NOR')">NOR</button>
+        <button class="option" onclick="chooseAnswer('XOR')">XOR</button>
+      </div>
+
+      <div class="result-box" id="resultBox">
+        <h3 id="resultTitle"></h3>
+        <p id="explanation"></p>
+        <button class="next-btn" onclick="nextQuestion()">다음 문제</button>
+      </div>
+    </div>
+
+    <div id="finishArea" style="display:none;">
+      <h2 id="finalScore"></h2>
+      <p id="finalMessage"></p>
+
+      <div class="summary">
+        <strong>3초 판별법</strong><br>
+        NAND = 둘 다 1일 때만 0<br>
+        NOR = 둘 다 0일 때만 1<br>
+        XOR = 둘이 다를 때만 1
+      </div>
+
+      <button class="restart-btn" onclick="restartQuiz()">다시 풀기</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        title: "둘 다 1이면 오히려 0",
+        code: "A = 1\\nB = 1\\n\\n// 둘 다 1일 때만 출력이 0\\n// 나머지는 출력이 1인 회로는?",
+        answer: "NAND",
+        explanation: "AND의 반대라서 둘 다 1일 때만 0입니다."
+      },
+      {
+        title: "아무도 안 켜져야 켜짐",
+        code: "A = 0\\nB = 0\\n\\n// 둘 다 0일 때만 출력이 1\\n// 하나라도 1이면 출력이 0인 회로는?",
+        answer: "NOR",
+        explanation: "OR의 반대라서 둘 다 0일 때만 1입니다."
+      },
+      {
+        title: "의견이 달라야 작동",
+        code: "A = 1\\nB = 0\\n\\n// 두 입력이 서로 다를 때 출력이 1\\n// 같으면 출력이 0인 회로는?",
+        answer: "XOR",
+        explanation: "XOR은 두 입력이 다를 때만 1입니다."
+      },
+      {
+        title: "JS 코드로 보는 NOT AND",
+        code: "const A = true;\\nconst B = true;\\n\\nconst output = !(A && B);",
+        answer: "NAND",
+        explanation: "A && B는 AND이고, 앞에 !가 붙어서 NOT AND, 즉 NAND입니다."
+      },
+      {
+        title: "JS 코드로 보는 NOT OR",
+        code: "const A = false;\\nconst B = false;\\n\\nconst output = !(A || B);",
+        answer: "NOR",
+        explanation: "A || B는 OR이고, 앞에 !가 붙어서 NOT OR, 즉 NOR입니다."
+      },
+      {
+        title: "서로 다르면 true",
+        code: "const A = true;\\nconst B = false;\\n\\nconst output = A !== B;",
+        answer: "XOR",
+        explanation: "!==는 서로 다를 때 true입니다. 그래서 XOR과 같습니다."
+      }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let selected = false;
+
+    function loadQuestion() {
+      selected = false;
+
+      const current = questions[currentIndex];
+
+      document.getElementById("questionNumber").textContent =
+        `문제 ${currentIndex + 1} / ${questions.length}`;
+
+      document.getElementById("scoreText").textContent =
+        `점수 ${score}점`;
+
+      document.getElementById("questionTitle").textContent = current.title;
+      document.getElementById("questionCode").textContent = current.code;
+
+      document.getElementById("resultBox").style.display = "none";
+      document.getElementById("resultTitle").textContent = "";
+      document.getElementById("explanation").textContent = "";
+
+      const optionButtons = document.querySelectorAll(".option");
+      optionButtons.forEach(function(button) {
+        button.classList.remove("correct", "wrong");
+        button.disabled = false;
+      });
+    }
+
+    function chooseAnswer(answer) {
+      if (selected) return;
+      selected = true;
+
+      const current = questions[currentIndex];
+      const optionButtons = document.querySelectorAll(".option");
+
+      optionButtons.forEach(function(button) {
+        button.disabled = true;
+
+        if (button.textContent === current.answer) {
+          button.classList.add("correct");
+        }
+
+        if (button.textContent === answer && answer !== current.answer) {
+          button.classList.add("wrong");
+        }
+      });
+
+      if (answer === current.answer) {
+        score++;
+        document.getElementById("resultTitle").textContent = "정답!";
+      } else {
+        document.getElementById("resultTitle").textContent =
+          `오답! 정답은 ${current.answer}`;
+      }
+
+      document.getElementById("explanation").textContent = current.explanation;
+      document.getElementById("resultBox").style.display = "block";
+      document.getElementById("scoreText").textContent = `점수 ${score}점`;
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+
+      if (currentIndex >= questions.length) {
+        finishQuiz();
+      } else {
+        loadQuestion();
+      }
+    }
+
+    function finishQuiz() {
+      document.getElementById("quizArea").style.display = "none";
+      document.getElementById("finishArea").style.display = "block";
+
+      document.getElementById("finalScore").textContent =
+        `${score} / ${questions.length}점`;
+
+      if (score === questions.length) {
+        document.getElementById("finalMessage").textContent =
+          "완벽합니다. NAND, NOR, XOR 이제 거의 안 헷갈릴 거예요.";
+      } else if (score >= 4) {
+        document.getElementById("finalMessage").textContent =
+          "거의 잡았습니다. 틀린 유형만 한 번 더 보면 됩니다.";
+      } else {
+        document.getElementById("finalMessage").textContent =
+          "괜찮아요. 이건 반복하면 바로 잡히는 유형입니다.";
+      }
+    }
+
+    function restartQuiz() {
+      currentIndex = 0;
+      score = 0;
+      selected = false;
+
+      document.getElementById("quizArea").style.display = "block";
+      document.getElementById("finishArea").style.display = "none";
+
+      loadQuestion();
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>
