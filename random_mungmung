@@ -26,7 +26,7 @@
             })
             .catch(error => {
                 console.error("알 수 없는 오류: ", error);
-                displayError(Error)
+                displayError(error)
             });
 
             function displayError(data) {
@@ -34,7 +34,8 @@
                 result.innerHTML = `
                     <p style="color : red">이미지를 불러오지 못했습니다.</p>
                 `;
-            }});
+            }
+});
 
             function displayResult(data) {
                 console.log("화면에 DOM 그리기: ", data)
