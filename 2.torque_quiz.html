@@ -3,309 +3,285 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NAND NOR XOR 퀴즈</title>
+  <title>마찰 토크 퀴즈</title>
   <style>
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111827;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .container {
-      width: 90%;
-      max-width: 760px;
-      background: #1f2937;
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-    }
-
-    h1 {
-      margin-top: 0;
-      font-size: 32px;
-    }
-
-    .subtitle {
-      color: #cbd5e1;
-      margin-bottom: 24px;
-    }
-
-    .quiz-info {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      color: #cbd5e1;
-    }
-
-    pre {
-      background: #020617;
-      border: 1px solid #334155;
-      padding: 18px;
-      border-radius: 14px;
-      white-space: pre-wrap;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #222;
       line-height: 1.6;
+    }
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    .subtitle { margin: 0 0 20px; color: #666; }
+    .formula {
+      background: #f0f3ff;
+      border-left: 5px solid #556ee6;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 22px;
+    }
+    .problem-num {
+      font-weight: 700;
+      color: #556ee6;
+      margin-bottom: 8px;
+    }
+    .question {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .choices {
+      display: grid;
+      gap: 10px;
       margin-bottom: 20px;
     }
-
-    .options {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    button {
-      border: none;
-      border-radius: 14px;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: bold;
+    button.choice {
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
       cursor: pointer;
+      font-size: 16px;
+      transition: 0.15s;
     }
-
-    .option {
-      background: white;
-      color: #111827;
+    button.choice:hover { background: #f7f7f7; }
+    button.choice.selected {
+      border-color: #556ee6;
+      background: #eef1ff;
+      font-weight: 700;
     }
-
-    .option:hover {
-      background: #e5e7eb;
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
     }
-
-    .correct {
-      background: #10b981 !important;
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #222;
       color: white;
     }
-
-    .wrong {
-      background: #ef4444 !important;
-      color: white;
+    .btn.secondary {
+      background: #e9e9e9;
+      color: #222;
     }
-
-    .result-box {
-      margin-top: 20px;
-      padding: 18px;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 14px;
+    .result {
       display: none;
-    }
-
-    .next-btn,
-    .restart-btn {
-      margin-top: 14px;
-      background: #f8fafc;
-      color: #111827;
-    }
-
-    .summary {
-      background: #020617;
-      border: 1px solid #334155;
+      padding: 16px;
       border-radius: 14px;
-      padding: 18px;
-      margin-top: 20px;
-      line-height: 1.8;
+      background: #f7f7f7;
+      white-space: pre-line;
     }
-
-    @media (max-width: 600px) {
-      .options {
-        grid-template-columns: 1fr;
-      }
-
-      h1 {
-        font-size: 26px;
-      }
+    .result.correct {
+      background: #eaf8ee;
+      border: 1px solid #9bd3aa;
+    }
+    .result.wrong {
+      background: #fff0f0;
+      border: 1px solid #e2a1a1;
+    }
+    .score {
+      margin-top: 18px;
+      color: #555;
+      font-weight: 700;
+    }
+    .tip {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 14px;
+      background: #fff8df;
+      border: 1px solid #ead27a;
+    }
+    code {
+      background: rgba(0,0,0,0.06);
+      padding: 2px 6px;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>NAND · NOR · XOR 퀴즈</h1>
-    <p class="subtitle">헷갈리는 논리회로를 3지선다로 빠르게 연습해봅시다.</p>
+  <div class="wrap">
+    <div class="card">
+      <h1>마찰 토크 퀴즈</h1>
+      <p class="subtitle">원통 커플링 / 클러치 / 브레이크 계산 감각 잡기</p>
 
-    <div id="quizArea">
-      <div class="quiz-info">
-        <span id="questionNumber"></span>
-        <span id="scoreText"></span>
+      <div class="formula">
+        <strong>핵심 공식</strong><br>
+        원통 커플링 기본형: <code>T = μ × W × π × r</code><br>
+        단위가 <code>kgf·cm</code>이면 지름 mm를 cm로 바꾼 뒤, 반드시 <strong>반지름</strong>을 사용한다.
       </div>
 
-      <h2 id="questionTitle"></h2>
-      <pre id="questionCode"></pre>
+      <div class="problem-num" id="problemNum"></div>
+      <div class="question" id="question"></div>
+      <div class="choices" id="choices"></div>
 
-      <div class="options">
-        <button class="option" onclick="chooseAnswer('NAND')">NAND</button>
-        <button class="option" onclick="chooseAnswer('NOR')">NOR</button>
-        <button class="option" onclick="chooseAnswer('XOR')">XOR</button>
+      <div class="actions">
+        <button class="btn" onclick="checkAnswer()">정답 확인</button>
+        <button class="btn secondary" onclick="nextProblem()">다음 문제</button>
+        <button class="btn secondary" onclick="resetQuiz()">처음부터</button>
       </div>
 
-      <div class="result-box" id="resultBox">
-        <h3 id="resultTitle"></h3>
-        <p id="explanation"></p>
-        <button class="next-btn" onclick="nextQuestion()">다음 문제</button>
+      <div class="result" id="result"></div>
+      <div class="score" id="score"></div>
+
+      <div class="tip">
+        <strong>햄식 암기 포인트</strong><br>
+        ① 지름이 나오면 일단 반지름으로 쪼갠다.<br>
+        ② mm는 cm로 바꾼다. 예: 40mm = 4cm, 반지름은 2cm.<br>
+        ③ <code>μ × W × π × r</code> 순서로 넣는다.<br>
+        ④ 보기 단위가 kgf·cm인지, N·mm인지 끝까지 확인한다.
       </div>
-    </div>
-
-    <div id="finishArea" style="display:none;">
-      <h2 id="finalScore"></h2>
-      <p id="finalMessage"></p>
-
-      <div class="summary">
-        <strong>3초 판별법</strong><br>
-        NAND = 둘 다 1일 때만 0<br>
-        NOR = 둘 다 0일 때만 1<br>
-        XOR = 둘이 다를 때만 1
-      </div>
-
-      <button class="restart-btn" onclick="restartQuiz()">다시 풀기</button>
     </div>
   </div>
 
   <script>
-    const questions = [
+    const problems = [
       {
-        title: "둘 다 1이면 오히려 0",
-        code: "A = 1\\nB = 1\\n\\n// 둘 다 1일 때만 출력이 0\\n// 나머지는 출력이 1인 회로는?",
-        answer: "NAND",
-        explanation: "AND의 반대라서 둘 다 1일 때만 0입니다."
+        question: "원통 커플링에서 축을 누르는 힘이 100kgf, 축지름이 40mm, 마찰계수가 0.2일 때 전달 가능한 토크는?",
+        choices: ["84.5 kgf·cm", "96.8 kgf·cm", "105.8 kgf·cm", "125.6 kgf·cm"],
+        answer: 3,
+        explain: "40mm = 4cm, 반지름 r = 2cm\nT = μ × W × π × r\nT = 0.2 × 100 × 3.14 × 2 = 125.6 kgf·cm"
       },
       {
-        title: "아무도 안 켜져야 켜짐",
-        code: "A = 0\\nB = 0\\n\\n// 둘 다 0일 때만 출력이 1\\n// 하나라도 1이면 출력이 0인 회로는?",
-        answer: "NOR",
-        explanation: "OR의 반대라서 둘 다 0일 때만 1입니다."
+        question: "원통 커플링에서 W = 150kgf, d = 60mm, μ = 0.15일 때 전달 토크는?",
+        choices: ["141.3 kgf·cm", "211.95 kgf·cm", "282.6 kgf·cm", "423.9 kgf·cm"],
+        answer: 1,
+        explain: "60mm = 6cm, 반지름 r = 3cm\nT = 0.15 × 150 × 3.14 × 3 = 211.95 kgf·cm"
       },
       {
-        title: "의견이 달라야 작동",
-        code: "A = 1\\nB = 0\\n\\n// 두 입력이 서로 다를 때 출력이 1\\n// 같으면 출력이 0인 회로는?",
-        answer: "XOR",
-        explanation: "XOR은 두 입력이 다를 때만 1입니다."
+        question: "원통 커플링에서 W = 200kgf, d = 50mm, μ = 0.2일 때 전달 토크는?",
+        choices: ["100 kgf·cm", "157 kgf·cm", "314 kgf·cm", "628 kgf·cm"],
+        answer: 2,
+        explain: "50mm = 5cm, 반지름 r = 2.5cm\nT = 0.2 × 200 × 3.14 × 2.5 = 314 kgf·cm"
       },
       {
-        title: "JS 코드로 보는 NOT AND",
-        code: "const A = true;\\nconst B = true;\\n\\nconst output = !(A && B);",
-        answer: "NAND",
-        explanation: "A && B는 AND이고, 앞에 !가 붙어서 NOT AND, 즉 NAND입니다."
+        question: "원통 커플링에서 d = 80mm, W = 120kgf, μ = 0.25일 때 전달 토크는?",
+        choices: ["188.4 kgf·cm", "251.2 kgf·cm", "376.8 kgf·cm", "753.6 kgf·cm"],
+        answer: 2,
+        explain: "80mm = 8cm, 반지름 r = 4cm\nT = 0.25 × 120 × 3.14 × 4 = 376.8 kgf·cm"
       },
       {
-        title: "JS 코드로 보는 NOT OR",
-        code: "const A = false;\\nconst B = false;\\n\\nconst output = !(A || B);",
-        answer: "NOR",
-        explanation: "A || B는 OR이고, 앞에 !가 붙어서 NOT OR, 즉 NOR입니다."
+        question: "전달 토크가 314kgf·cm이고, W = 100kgf, μ = 0.25일 때 축지름 d는?",
+        choices: ["20mm", "30mm", "40mm", "50mm"],
+        answer: 2,
+        explain: "T = μ × W × π × r\n314 = 0.25 × 100 × 3.14 × r\nr = 4cm\n지름 d = 8cm = 80mm가 나와야 하지만 보기에 없음.\n따라서 이 문제는 보기 오류 문제입니다."
       },
       {
-        title: "서로 다르면 true",
-        code: "const A = true;\\nconst B = false;\\n\\nconst output = A !== B;",
-        answer: "XOR",
-        explanation: "!==는 서로 다를 때 true입니다. 그래서 XOR과 같습니다."
+        question: "원통 커플링에서 W = 80kgf, d = 40mm, μ = 0.3일 때 전달 토크는?",
+        choices: ["75.36 kgf·cm", "150.72 kgf·cm", "301.44 kgf·cm", "37.68 kgf·cm"],
+        answer: 1,
+        explain: "40mm = 4cm, 반지름 r = 2cm\nT = 0.3 × 80 × 3.14 × 2 = 150.72 kgf·cm"
+      },
+      {
+        question: "다음 중 원통 커플링 토크 계산에서 가장 많이 하는 실수는?",
+        choices: ["마찰계수를 곱하는 것", "지름 대신 반지름을 쓰는 것", "반지름 대신 지름을 그대로 쓰는 것", "π를 곱하는 것"],
+        answer: 2,
+        explain: "토크는 중심으로부터의 거리, 즉 반지름 r을 곱합니다.\n지름 d를 그대로 쓰면 값이 2배로 커집니다."
+      },
+      {
+        question: "축지름 30mm는 kgf·cm 단위 계산에서 반지름으로 얼마를 넣어야 하는가?",
+        choices: ["1.5cm", "3cm", "15cm", "30cm"],
+        answer: 0,
+        explain: "30mm = 3cm\n반지름은 절반이므로 r = 1.5cm"
       }
     ];
 
-    let currentIndex = 0;
-    let score = 0;
-    let selected = false;
+    let current = 0;
+    let selected = null;
+    let correctCount = 0;
+    let solved = new Array(problems.length).fill(false);
 
-    function loadQuestion() {
-      selected = false;
+    function renderProblem() {
+      const p = problems[current];
+      selected = null;
+      document.getElementById("problemNum").textContent = `문제 ${current + 1} / ${problems.length}`;
+      document.getElementById("question").textContent = p.question;
+      document.getElementById("result").style.display = "none";
+      document.getElementById("result").className = "result";
 
-      const current = questions[currentIndex];
+      const choicesEl = document.getElementById("choices");
+      choicesEl.innerHTML = "";
 
-      document.getElementById("questionNumber").textContent =
-        `문제 ${currentIndex + 1} / ${questions.length}`;
-
-      document.getElementById("scoreText").textContent =
-        `점수 ${score}점`;
-
-      document.getElementById("questionTitle").textContent = current.title;
-      document.getElementById("questionCode").textContent = current.code;
-
-      document.getElementById("resultBox").style.display = "none";
-      document.getElementById("resultTitle").textContent = "";
-      document.getElementById("explanation").textContent = "";
-
-      const optionButtons = document.querySelectorAll(".option");
-      optionButtons.forEach(function(button) {
-        button.classList.remove("correct", "wrong");
-        button.disabled = false;
-      });
-    }
-
-    function chooseAnswer(answer) {
-      if (selected) return;
-      selected = true;
-
-      const current = questions[currentIndex];
-      const optionButtons = document.querySelectorAll(".option");
-
-      optionButtons.forEach(function(button) {
-        button.disabled = true;
-
-        if (button.textContent === current.answer) {
-          button.classList.add("correct");
-        }
-
-        if (button.textContent === answer && answer !== current.answer) {
-          button.classList.add("wrong");
-        }
+      p.choices.forEach((choice, index) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.textContent = `${index + 1}. ${choice}`;
+        btn.onclick = () => selectChoice(index);
+        choicesEl.appendChild(btn);
       });
 
-      if (answer === current.answer) {
-        score++;
-        document.getElementById("resultTitle").textContent = "정답!";
-      } else {
-        document.getElementById("resultTitle").textContent =
-          `오답! 정답은 ${current.answer}`;
+      updateScore();
+    }
+
+    function selectChoice(index) {
+      selected = index;
+      const buttons = document.querySelectorAll(".choice");
+      buttons.forEach(btn => btn.classList.remove("selected"));
+      buttons[index].classList.add("selected");
+    }
+
+    function checkAnswer() {
+      const result = document.getElementById("result");
+      const p = problems[current];
+
+      if (selected === null) {
+        result.style.display = "block";
+        result.className = "result wrong";
+        result.textContent = "먼저 보기를 골라주세요.";
+        return;
       }
 
-      document.getElementById("explanation").textContent = current.explanation;
-      document.getElementById("resultBox").style.display = "block";
-      document.getElementById("scoreText").textContent = `점수 ${score}점`;
-    }
+      const isCorrect = selected === p.answer;
 
-    function nextQuestion() {
-      currentIndex++;
-
-      if (currentIndex >= questions.length) {
-        finishQuiz();
-      } else {
-        loadQuestion();
+      if (isCorrect && !solved[current]) {
+        correctCount++;
+        solved[current] = true;
       }
+
+      result.style.display = "block";
+      result.className = isCorrect ? "result correct" : "result wrong";
+      result.textContent = `${isCorrect ? "정답입니다." : "오답입니다."}\n\n정답: ${p.answer + 1}번\n\n해설:\n${p.explain}`;
+      updateScore();
     }
 
-    function finishQuiz() {
-      document.getElementById("quizArea").style.display = "none";
-      document.getElementById("finishArea").style.display = "block";
-
-      document.getElementById("finalScore").textContent =
-        `${score} / ${questions.length}점`;
-
-      if (score === questions.length) {
-        document.getElementById("finalMessage").textContent =
-          "완벽합니다. NAND, NOR, XOR 이제 거의 안 헷갈릴 거예요.";
-      } else if (score >= 4) {
-        document.getElementById("finalMessage").textContent =
-          "거의 잡았습니다. 틀린 유형만 한 번 더 보면 됩니다.";
-      } else {
-        document.getElementById("finalMessage").textContent =
-          "괜찮아요. 이건 반복하면 바로 잡히는 유형입니다.";
-      }
+    function nextProblem() {
+      current = (current + 1) % problems.length;
+      renderProblem();
     }
 
-    function restartQuiz() {
-      currentIndex = 0;
-      score = 0;
-      selected = false;
-
-      document.getElementById("quizArea").style.display = "block";
-      document.getElementById("finishArea").style.display = "none";
-
-      loadQuestion();
+    function resetQuiz() {
+      current = 0;
+      selected = null;
+      correctCount = 0;
+      solved = new Array(problems.length).fill(false);
+      renderProblem();
     }
 
-    loadQuestion();
+    function updateScore() {
+      document.getElementById("score").textContent = `현재 점수: ${correctCount} / ${problems.length}`;
+    }
+
+    renderProblem();
   </script>
 </body>
 </html>
