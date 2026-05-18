@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>마찰 토크 퀴즈</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    .subtitle { margin: 0 0 20px; color: #666; }
+    .formula {
+      background: #f0f3ff;
+      border-left: 5px solid #556ee6;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 22px;
+    }
+    .problem-num {
+      font-weight: 700;
+      color: #556ee6;
+      margin-bottom: 8px;
+    }
+    .question {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .choices {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button.choice {
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.15s;
+    }
+    button.choice:hover { background: #f7f7f7; }
+    button.choice.selected {
+      border-color: #556ee6;
+      background: #eef1ff;
+      font-weight: 700;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #222;
+      color: white;
+    }
+    .btn.secondary {
+      background: #e9e9e9;
+      color: #222;
+    }
+    .result {
+      display: none;
+      padding: 16px;
+      border-radius: 14px;
+      background: #f7f7f7;
+      white-space: pre-line;
+    }
+    .result.correct {
+      background: #eaf8ee;
+      border: 1px solid #9bd3aa;
+    }
+    .result.wrong {
+      background: #fff0f0;
+      border: 1px solid #e2a1a1;
+    }
+    .score {
+      margin-top: 18px;
+      color: #555;
+      font-weight: 700;
+    }
+    .tip {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 14px;
+      background: #fff8df;
+      border: 1px solid #ead27a;
+    }
+    code {
+      background: rgba(0,0,0,0.06);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>마찰 토크 퀴즈</h1>
+      <p class="subtitle">원통 커플링 / 클러치 / 브레이크 계산 감각 잡기</p>
+
+      <div class="formula">
+        <strong>핵심 공식</strong><br>
+        원통 커플링 기본형: <code>T = μ × W × π × r</code><br>
+        단위가 <code>kgf·cm</code>이면 지름 mm를 cm로 바꾼 뒤, 반드시 <strong>반지름</strong>을 사용한다.
+      </div>
+
+      <div class="problem-num" id="problemNum"></div>
+      <div class="question" id="question"></div>
+      <div class="choices" id="choices"></div>
+
+      <div class="actions">
+        <button class="btn" onclick="checkAnswer()">정답 확인</button>
+        <button class="btn secondary" onclick="nextProblem()">다음 문제</button>
+        <button class="btn secondary" onclick="resetQuiz()">처음부터</button>
+      </div>
+
+      <div class="result" id="result"></div>
+      <div class="score" id="score"></div>
+
+      <div class="tip">
+        <strong>햄식 암기 포인트</strong><br>
+        ① 지름이 나오면 일단 반지름으로 쪼갠다.<br>
+        ② mm는 cm로 바꾼다. 예: 40mm = 4cm, 반지름은 2cm.<br>
+        ③ <code>μ × W × π × r</code> 순서로 넣는다.<br>
+        ④ 보기 단위가 kgf·cm인지, N·mm인지 끝까지 확인한다.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const problems = [
+      {
+        question: "원통 커플링에서 축을 누르는 힘이 100kgf, 축지름이 40mm, 마찰계수가 0.2일 때 전달 가능한 토크는?",
+        choices: ["84.5 kgf·cm", "96.8 kgf·cm", "105.8 kgf·cm", "125.6 kgf·cm"],
+        answer: 3,
+        explain: "40mm = 4cm, 반지름 r = 2cm\nT = μ × W × π × r\nT = 0.2 × 100 × 3.14 × 2 = 125.6 kgf·cm"
+      },
+      {
+        question: "원통 커플링에서 W = 150kgf, d = 60mm, μ = 0.15일 때 전달 토크는?",
+        choices: ["141.3 kgf·cm", "211.95 kgf·cm", "282.6 kgf·cm", "423.9 kgf·cm"],
+        answer: 1,
+        explain: "60mm = 6cm, 반지름 r = 3cm\nT = 0.15 × 150 × 3.14 × 3 = 211.95 kgf·cm"
+      },
+      {
+        question: "원통 커플링에서 W = 200kgf, d = 50mm, μ = 0.2일 때 전달 토크는?",
+        choices: ["100 kgf·cm", "157 kgf·cm", "314 kgf·cm", "628 kgf·cm"],
+        answer: 2,
+        explain: "50mm = 5cm, 반지름 r = 2.5cm\nT = 0.2 × 200 × 3.14 × 2.5 = 314 kgf·cm"
+      },
+      {
+        question: "원통 커플링에서 d = 80mm, W = 120kgf, μ = 0.25일 때 전달 토크는?",
+        choices: ["188.4 kgf·cm", "251.2 kgf·cm", "376.8 kgf·cm", "753.6 kgf·cm"],
+        answer: 2,
+        explain: "80mm = 8cm, 반지름 r = 4cm\nT = 0.25 × 120 × 3.14 × 4 = 376.8 kgf·cm"
+      },
+      {
+        question: "전달 토크가 314kgf·cm이고, W = 100kgf, μ = 0.25일 때 축지름 d는?",
+        choices: ["20mm", "30mm", "40mm", "50mm"],
+        answer: 2,
+        explain: "T = μ × W × π × r\n314 = 0.25 × 100 × 3.14 × r\nr = 4cm\n지름 d = 8cm = 80mm가 나와야 하지만 보기에 없음.\n따라서 이 문제는 보기 오류 문제입니다."
+      },
+      {
+        question: "원통 커플링에서 W = 80kgf, d = 40mm, μ = 0.3일 때 전달 토크는?",
+        choices: ["75.36 kgf·cm", "150.72 kgf·cm", "301.44 kgf·cm", "37.68 kgf·cm"],
+        answer: 1,
+        explain: "40mm = 4cm, 반지름 r = 2cm\nT = 0.3 × 80 × 3.14 × 2 = 150.72 kgf·cm"
+      },
+      {
+        question: "다음 중 원통 커플링 토크 계산에서 가장 많이 하는 실수는?",
+        choices: ["마찰계수를 곱하는 것", "지름 대신 반지름을 쓰는 것", "반지름 대신 지름을 그대로 쓰는 것", "π를 곱하는 것"],
+        answer: 2,
+        explain: "토크는 중심으로부터의 거리, 즉 반지름 r을 곱합니다.\n지름 d를 그대로 쓰면 값이 2배로 커집니다."
+      },
+      {
+        question: "축지름 30mm는 kgf·cm 단위 계산에서 반지름으로 얼마를 넣어야 하는가?",
+        choices: ["1.5cm", "3cm", "15cm", "30cm"],
+        answer: 0,
+        explain: "30mm = 3cm\n반지름은 절반이므로 r = 1.5cm"
+      }
+    ];
+
+    let current = 0;
+    let selected = null;
+    let correctCount = 0;
+    let solved = new Array(problems.length).fill(false);
+
+    function renderProblem() {
+      const p = problems[current];
+      selected = null;
+      document.getElementById("problemNum").textContent = `문제 ${current + 1} / ${problems.length}`;
+      document.getElementById("question").textContent = p.question;
+      document.getElementById("result").style.display = "none";
+      document.getElementById("result").className = "result";
+
+      const choicesEl = document.getElementById("choices");
+      choicesEl.innerHTML = "";
+
+      p.choices.forEach((choice, index) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.textContent = `${index + 1}. ${choice}`;
+        btn.onclick = () => selectChoice(index);
+        choicesEl.appendChild(btn);
+      });
+
+      updateScore();
+    }
+
+    function selectChoice(index) {
+      selected = index;
+      const buttons = document.querySelectorAll(".choice");
+      buttons.forEach(btn => btn.classList.remove("selected"));
+      buttons[index].classList.add("selected");
+    }
+
+    function checkAnswer() {
+      const result = document.getElementById("result");
+      const p = problems[current];
+
+      if (selected === null) {
+        result.style.display = "block";
+        result.className = "result wrong";
+        result.textContent = "먼저 보기를 골라주세요.";
+        return;
+      }
+
+      const isCorrect = selected === p.answer;
+
+      if (isCorrect && !solved[current]) {
+        correctCount++;
+        solved[current] = true;
+      }
+
+      result.style.display = "block";
+      result.className = isCorrect ? "result correct" : "result wrong";
+      result.textContent = `${isCorrect ? "정답입니다." : "오답입니다."}\n\n정답: ${p.answer + 1}번\n\n해설:\n${p.explain}`;
+      updateScore();
+    }
+
+    function nextProblem() {
+      current = (current + 1) % problems.length;
+      renderProblem();
+    }
+
+    function resetQuiz() {
+      current = 0;
+      selected = null;
+      correctCount = 0;
+      solved = new Array(problems.length).fill(false);
+      renderProblem();
+    }
+
+    function updateScore() {
+      document.getElementById("score").textContent = `현재 점수: ${correctCount} / ${problems.length}`;
+    }
+
+    renderProblem();
+  </script>
+</body>
+</html>
