@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT 단어 퀴즈 - 박지우 단어장</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <h1 class="title">IT 단어 랜덤 퀴즈</h1>
+        <p class="subtitle">원하는 카테고리를 고르면 매번 랜덤 순서로 문제가 시작돼요. 보기 순서도 매번 섞입니다.</p>
+      </div>
+      <div class="pill">총 <span id="totalCount">0</span>개 단어</div>
+    </section>
+
+    <section id="home" class="card">
+      <h2 style="margin:0;">공부할 범위를 골라주세요</h2>
+      <div class="mode-row" aria-label="퀴즈 유형 선택">
+        <button class="mode active" data-mode="termToDesc">단어 보고 뜻 맞히기</button>
+        <button class="mode" data-mode="descToTerm">뜻 보고 단어 맞히기</button>
+      </div>
+      <div id="categoryGrid" class="category-grid"></div>
+      <p class="note">추천: 처음엔 <b>공통</b>으로 전체 감을 잡고, 그다음 FE/BE/NW처럼 약한 분야만 따로 돌리면 좋아요.</p>
+    </section>
+
+    <section id="quiz" class="card hidden">
+      <div class="topbar">
+        <button class="link-btn" id="backBtn">← 카테고리 다시 고르기</button>
+        <div class="stats">
+          <span class="stat" id="catStat">-</span>
+          <span class="stat" id="scoreStat">0 / 0</span>
+          <span class="stat" id="leftStat">남은 문제 0</span>
+        </div>
+      </div>
+      <div class="progress"><div id="bar"></div></div>
+      <div class="question">
+        <div class="q-label" id="qLabel">이 단어의 뜻은?</div>
+        <div class="q-main" id="qTerm"></div>
+        <div class="q-desc hidden" id="qDesc"></div>
+      </div>
+      <div class="options" id="options"></div>
+      <div id="answerBox" class="answer-box hidden"></div>
+      <div class="controls">
+        <button class="primary hidden" id="nextBtn">다음 문제</button>
+        <button class="secondary" id="restartBtn">이 범위 다시 셔플</button>
+        <button class="danger" id="resetWrongBtn">오답노트 비우기</button>
+      </div>
+      <div id="reviewArea" class="note"></div>
+    </section>
+  </div>
+
+  <script>
+    const WORDS = {"공통": [{"term": "HTTP", "short": "웹 브라우저(클라이언트)와 서버가 HTML, 이미지 등 데이터를 교환하기 위한 규칙, 프로토콜.", "detail": "Hypertext Transfer Protocol, 사용자가 링크를 클릭하면 브라우저가 서버에 데이터를 요청(Request)하고, 서버가 응답(Response)하여 웹 페이지를 보여주는 방식"}, {"term": "JavaScript", "short": "프로그래밍 언어, 웹 페이지를 동적으로 만들고 서버까지 개발할 수 있는 멀티 패러다임 프로그래밍 언어.", "detail": "객체 기반의 스크립트 언어로 HTML/CSS와 함께 프론트앤드 필수기술"}, {"term": "GW-BASIC", "short": "1980년대 인기를 끌었던 프로그래밍 입문용 언어.", "detail": "1980년대 후반 MS-DOS 환경에서 인기를 끌었던 마이크로소프트의 인터프리터 방식 프로그래밍 언어"}, {"term": "Git", "short": "코드가 보관되는 폴더인 저장소를 관리하는 프로그램(분산 버전 관리 시스템 프로그램)", "detail": ""}, {"term": "HTTPS", "short": "웹 브라우저와 서버 간의 데이터를 암호화하여 전송하는 안전한 통신 규약", "detail": "Hypertext Transfer Protocol Secure, SSL/TLS 인증서를 사용하여 통신을 암호화하고 서버를 인증함으로써 중간자 공격, 데이터 변조 및 도청을 방지."}, {"term": "HTML", "short": "웹 브라우저에 표시되도록 설계된 표준 마크업 언어.", "detail": "HyperText Markup Language, 제목, 단락, 목록 등 본문을 위한 구조적 의미 표현 뿐만 아니라 링크, 인용 그밖의 구조적 문서를 만들 수 있는 방법 제공."}, {"term": "CSS", "short": "마크업 언어가 실제 표시되는 방법을 기술하는 스타일 언어.", "detail": "Cascading Style Sheets."}, {"term": "API", "short": "서로 다른 소프트웨어 구성 요소가 데이터를 주고받거나 기능을 활용할 수 있도록 정의된 일련의 규칙과 약속", "detail": "Application Programming interface, 프로그램을 만드는데 필요한 기능을 직접 구현하지 않고 API 제공자들이 공유하는 데이터와 모듈 등을 갖다 쓸 수 있음."}, {"term": "Ontology", "short": "특정 분야에 존재하는 개념이나 관계를 명확하게 정의하고 구조화한 지식 모델", "detail": "기존의 가시적인 데이터 뿐만 아니라 비가시적인 개념까지 표현하는 지식표현방법. 개체, 클래스, 속성, 관계, 제약조건 구성. 의미, 관계를 포함한다는 점에서 경쟁력."}, {"term": "SDLC", "short": "소프트웨어 개발 수명주기. 소프트웨어 개발의 효율성과 품질을 높이기 위해 체계적으로 설계된 프로세스", "detail": "Software Development Life Cycle, 고품질 소프트웨어를 최소 비용과 시간으로 개발하기 위해 기획, 설계, 구현, 테스트, 배포, 유지보수의 단계를 구조화한 방법론"}, {"term": "SRS", "short": "소프트웨어 요구사항 명세서, 개발할 SW의 기능, 성능, 제약조건을 정의한 문서로 프로젝트의 핵심 지침서.", "detail": "Software Requirement Specification."}, {"term": "SDD", "short": "AI 시대에 코드보다 명세를 먼저 정의하고 이를 바탕으로 AI 에이전트가 코드를 생성/검증하는 현대적 개발 방법론", "detail": "Spec-Driven Development."}, {"term": "STS", "short": "스프링 프레임워크 기반의 자바 애플리케이션 개발을 위한 이클립스(Eclipse) 기반의 오픈소스 IDE", "detail": "Spring Tool Suite. Java/Spring 기반의 웹 서비스, 애플리케이션 구축."}, {"term": "React.js", "short": "자바스크립트 라이브러리의 하나로서 사용자 인터페이스를 만들기 위해 사용된다.", "detail": "보통 라우팅, API통신 등의 기능이 요구되는데 리액트에는 기본적으로 제공되지 않기 때문에 추가 라이브러리를 사용해야 한다.(2021-11기준)"}, {"term": "TDDD", "short": "데이터베이스 테스트 주도 개발(Test-Driven Database Development) 방법론", "detail": "제적(prior) 테스트를 도출하여 작성한 후, 실제적인 구현 착수보다 우선하는 소프트웨어 개발 방법론."}, {"term": "Regression Testing", "short": "회귀 테스트, 코드 수정으로 인해 기존 기능이 손상되지 않거나 새로운 버그가 발생하지 않는지 확인하는 데 사용되는 SW 테스트 전략", "detail": "소프트웨어의 기능 추가, 변경, 버그 수정 후, 기존에 잘 작동하던 기능에 회귀 버그가 발생했는지 확인하는 재테스트 기법"}, {"term": "CI/CD", "short": "개발자가 코드를 공유 저장소에 자주 반영(CI)하고, 자동화된 테스트 및 빌드(CD)", "detail": "지속적 통합(Continuous Integration)과 지속적 제공/배포(Continuous Delivery/Deployment)를 결합한 자동화 프로세스"}, {"term": "Kubernetes", "short": "k8s, 컨테이너화된 애플리케이션의 배포, 확장, 관리를 자동화하는 오픈소스 플랫폼", "detail": "쿠버네티스. 도커 등 컨테이너화된 애플리케이션의 배포, 확장, 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼"}, {"term": "I18N", "short": "소프트웨어를 다양한 언어, 지역, 문화권 환경에 맞춰 쉽게 적응할 수 있도록 설계하는 개발 과정", "detail": "Internationalization. 텍스트 번역뿐만 아니라 날짜/숫자 형식, 화폐, UI 방향(RTL) 등을 사용자 환경에 맞게 최적화."}, {"term": "anaconda", "short": "패키지 관리와 디플로이를 단순케 할 목적으로 과학 계산을 위한 Python과 R 프로그래밍 언어의 자유-오픈 소스 배포판", "detail": ""}, {"term": "pip", "short": "Python에서 외부 패키지 모듈들을 설치하고 관리하는 패키지매니저.", "detail": "Python에서 사용가능한 다양한 package들을 설치 및 제거, 즉 관리하는 소프트웨어"}, {"term": "UV", "short": "빠르고 현대적인 Python 프로젝트/패키지 매니저. 가상환경과 의존성 설치를 빠르게 처리할 수 있도록 만든 CLI툴", "detail": "주로 Conda와 비교됨."}, {"term": "PATH environment variable", "short": "Path 환경변수. 운영체제가 명령어를 찾을 때 탐색하는 디렉토리 목록", "detail": ""}, {"term": "path", "short": "특정한 파일이 있는 위치를 나타내는 주소", "detail": ""}, {"term": "MFA", "short": "두 가지 이상의 서로 다른 인증 유형을 조합해 신원을 확인하는 방식", "detail": "multi-factor authentication. type 1+type 2, type2+type3, type3+type1 구성. 같은 유형끼리 조합은 MFA로 인정 안 됨."}, {"term": "2FA", "short": "MFA의 가장 흔한 형태로, 정확히 두 가지 인증 요소를 사용하는 방식", "detail": "two factor authentication, id/pw + otp"}, {"term": "SSH", "short": "네트워크를 통해 원격 서버에 안전하게 접속하기 위한 암호화 프로토콜", "detail": "secure shell, 주로 TCP 포트 22를 사용하여 클라이언트와 서버 간의 암호화된 터널을 생성합니다."}, {"term": "RSA", "short": "공개키(비대칭키) 암호화 알고리즘으로 가장 많이 씀", "detail": "리베스트-샤미르-애들먼 앞이름따서 지음. 소수(프라임넘버)라서 가능함. 작은 수는 복잡하지 않지만 큰 수로 가면 어마어마해짐."}, {"term": "PKI", "short": "공개키(비대칭키) 기반 구조", "detail": "항상 동일키, 이미 모두 공유됨."}, {"term": "SSH-keygen", "short": "공개키(삐대칭키) 알고리즘 기반의 SSH 키 쌍(공개키+개인키)을 생성하는 도구.", "detail": "일부 레거시 시스템이 패스워드 인증에 머물러있어서 국내에선 상대적으로 덜 씀."}, {"term": "Local Storage", "short": "웹 브라우저가 제공하는 클라이언트 측 데이터 장소(서버가 아닌, 사용자 브라우저에 데이터 저장)", "detail": "브라우저에 데이터를 영구적으로 저장하며, Session Storage처럼 탭을 닫아도 데이터가 사라지지 않음."}, {"term": "Oauth 2.0", "short": "제3자 애플리케이션에 비밀번호를 넘기지 않고도 특정한 권한만 위임할 수 있게 해주는 인증, 인가 프로토콜", "detail": ""}, {"term": "OpenID Connect", "short": "Oauth 2.0 위에 신원확인(인증) 기능을 추가한 프로토콜", "detail": "Access Token에 ID Token 추가발급"}, {"term": "SVN", "short": "중앙집중식 버전관리 시스템, 코드 변경 이력 관리하고 협업할 수 있게 해줌.", "detail": "Subversion, 서버에만 존재. 오프라인 작업 불가능, 브랜치 무거움. 속도 느려서 레거시 시스템 형상관리용으로 사용."}, {"term": "Remote Repository", "short": "원격저장소, 로컬이 아닌 서버에 있는 코드 저장소.", "detail": "GitHub, GitLab, Bitbucket 같은 곳이 대표적. 팀원들이 코드를 PUSH(올리고)/PULL(받아서) 함께 협업하는 공간"}, {"term": "Local Repository", "short": "내 PC에 있는 작업 폴더 + 변경 이력 저장소, 코드파일이나 수정기록도 저장됨.", "detail": "로컬저장소"}, {"term": "linefeed", "short": "리눅스 - 줄바꿈", "detail": ""}, {"term": "carriage return", "short": "윈도우 - 줄바꿈", "detail": ""}, {"term": "퍼지로직", "short": "참과 거짓이라는 이진 논리에서 벗어나 0~1 사이 연속적인 실수를 사용하여 모호하고 주관적인 정보를 처리하는 수학적 도구", "detail": "가전제품 제어, AI 등 복잡하고 불확실한 데이터를 다루는 시스템에 활용됨."}, {"term": "NLP", "short": "자연어처리. 인공지능의 하위분야로 컴퓨터가 인간의 언어를 이해, 해석, 생성 및 조작할 수 있도록 하는 기술", "detail": "Natural Language Processing. LLM과 달리 언어의 이해와 특정 작업(분석)에 중점을 둠. 분석기술로 워드투벡, BERT, GPT"}, {"term": "LLM", "short": "대규모 언어 모델, 인간의 언어를 이해하고 생성하는 데 사용되는 인공지능모델.", "detail": "Large Language Model. NLP와 달리 대규모 데이터를 기반으로 새로운 텍스트를 생성하는 데 더 특화되어있음."}, {"term": "NER", "short": "명명된 엔티티 인식. 텍스트 내에서 이인명, 지명, 기관명과 같은 특정한 정보를 가진 단어나 구를 식별하고 분류한다.", "detail": "Named Entity Recognition. NLP를 위한."}, {"term": "코사인유사도", "short": "두 벡터 간의 유사도를 각도로 측정하는 방법, -1~1 사이 값으로 표현", "detail": "벡터의 크기가 아닌 방향의 유사성을 측정. 값이 1에 가까울수록 유사, 0이면 무관, -1이면 반대. NLP에서 문장/단어 유사도 비교에 활용"}, {"term": "RNN", "short": "순환 신경망. 이전 단계 출력을 다음 입력으로 활용하여 순서 있는 데이터를 처리하는 신경망", "detail": "Recurrent Neural Network. 텍스트, 시계열 등 순차 데이터 처리에 적합. 장기 의존성 문제(기울기 소실)가 있어 LSTM, GRU로 발전. Transformer 등장 후 주류에서 밀림"}, {"term": "Transformer", "short": "어텐션 메커니즘 기반 딥러닝 모델 구조로 현대 LLM의 근간", "detail": "문장을 만들어내는 알고리즘. 'Attention is All You Need'에서 제안. 병렬 처리가 가능해 RNN보다 학습 속도가 빠르며, GPT·BERT 등 모든 현대 LLM의 기반 구조"}, {"term": "토큰화", "short": "텍스트를 모델이 처리할 수 있는 최소 단위(토큰)로 분리하는 과정", "detail": "단어·서브워드·문자 단위로 분리. LLM은 토큰 단위로 텍스트를 이해·생성하며, 한국어는 영어 대비 토큰 효율이 낮은 편"}, {"term": "입력 임베딩", "short": "토큰을 고차원 벡터로 변환하여 의미를 수치화하는 과정", "detail": "의미가 유사한 단어는 벡터 공간에서 가까이 위치. Transformer의 첫 번째 처리 단계로, 이후 어텐션 연산의 입력값이 됨"}, {"term": "TOP-K", "short": "AI가 다음 단어 생성 시 상위 K개 후보만 고려하여 선택하는 샘플링 방식", "detail": "AI가 고려하는 후보 단어의 수를 직접 제한하는 방식"}, {"term": "TOP-P", "short": "누적 확률이 P(%)가 될 때까지 후보 단어를 포함하여 선택하는 샘플링 방식", "detail": "특정 확률 퍼센테이지가 될 때까지 AI가 단어의 수를 뽑기"}, {"term": "ChatGPT", "short": "OpenAI가 GPT 모델 기반으로 만든 대화형 AI 서비스", "detail": "GPT-3.5, GPT-4 기반에 RLHF로 미세조정하여 자연스러운 대화가 가능하도록 한 챗봇."}, {"term": "RLHF", "short": "인간의 피드백을 강화학습에 결합하여 AI 모델을 정렬(Alignment)하는 기법", "detail": "인간이 선호하는 답변에 보상을 주어 모델을 미세조정하는 방식"}, {"term": "CoT", "short": "복잡한 추론이 필요할 때 단계별로 생각해보기를 추가하여 검증", "detail": "LLM이 복잡한 문제에 답을 내리기 전 중간 사고 단계를 명시적으로 표현하도록 유도하는 prompting 전략"}, {"term": "type1", "short": "지식 기반 인증 (사용자가 알고 있는 것)", "detail": "id/pw, PIN 등 사용자가 머릿속에 기억하는 정보로 인증"}, {"term": "type2", "short": "소유 기반 인증 (사용자가 가지고 있는 것)", "detail": "OTP 기기, 스마트카드, 휴대폰 등 물리적 소유물로 인증"}, {"term": "type3", "short": "존재 기반 인증 (사용자의 신체적 특성)", "detail": "지문, 홍채, 얼굴인식 등 생체정보로 인증. FIDO 프로토콜이 대표적"}, {"term": "FIDO", "short": "생체인증에 쓰이는 대표 프로토콜,", "detail": "Fast IDentity Online. FIDO2는 WebAuthn 포함. 피싱에 강하고 비밀번호 없는 인증(Passwordless) 구현 가능. type3 인증의 대표 구현체"}, {"term": "GPT", "short": "OpenAI가 개발한 대규모 사전학습 언어 모델", "detail": "Generative Pre-trained Transformer. 다양한 데이터로 학습시킨 것, 가장 유사한 단어들의 후보군 중에서 확률 기반 랜덤."}, {"term": "TCP", "short": "전송제어 프로토콜. 컴퓨터가 다른 컴퓨터와 데이터 통신을 하기 위한 다중화 규약", "detail": "Transmission Control Protocol. 3-way handshake로 연결 후 패킷 순서 보장·재전송 처리. HTTP/HTTPS의 기반. 속도보다 신뢰성이 중요한 곳에 사용"}, {"term": "UDP", "short": "사용자 데이터그램 프로토콜. 비연결형 전송 프로토콜로 신뢰성보다 속도를 우선시", "detail": "User Datagram Protocol. 연결 설정 없이 데이터 전송. 패킷 손실 가능하지만 빠름. 스트리밍, 온라인 게임, DNS, VoIP 등에 활용"}, {"term": "HypeText", "short": "링크를 통해 다른 문서로 이동할 수 있는 비선형적 텍스트", "detail": "클릭 한 번으로 연관 문서로 이동하는 구조. HTML의 'HT'가 HyperText의 약자이며, 웹의 핵심 개념"}, {"term": "Anchor tab", "short": "A tab. HTML에서 하이퍼링크를 만드는 태그", "detail": "<a href='URL'>텍스트<\/a> 형태로 사용. href로 이동 경로 지정, target='_blank'로 새 탭 열기 가능. 페이지 내 특정 위치(앵커)로 이동도 가능"}, {"term": "XML", "short": "데이터를 태그로 구조화하여 저장·전송하는 마크업 언어", "detail": "eXtensible Markup Language. 태그를 사용자가 직접 정의 가능. 시스템 간 데이터 교환에 사용되나 JSON 대비 무거움. 레거시 시스템·공공 API·문서 표준에서 여전히 활용"}, {"term": "Markdown", "short": "간단한 기호로 서식 있는 문서를 작성하는 경량 마크업 언어", "detail": "# (제목), * (강조), - (목록) 등 직관적 문법. HTML로 변환 가능. GitHub README, 블로그, 기술 문서 작성에 널리 사용됨"}, {"term": "GET", "short": "데이터를 URL에 담아 요청(조회)", "detail": ""}, {"term": "POST", "short": "데이터를 Body에 담아 요청(전송/저장), URL엔 안보임.", "detail": ""}, {"term": "URI Schema", "short": "어떤 방식으로 리소스에 접근할지 정의하는 규칙.", "detail": ""}, {"term": "DOM", "short": "문서 객체 모델로 웹 페이지를 스크립트 또는 프로그래밍 언어와 연결", "detail": "Document Object Model."}, {"term": "웹접근성", "short": "장애 여부, 나이, 환경에 상관없이 누구나 웹을 동등하게 이용할 수 있도록 만드는 것.", "detail": "대표적으로 이미지에 alt 추가(시각장애인 정보제공 고려)"}, {"term": "SEO", "short": "검색엔진 최적화, 검색결과에서 내 웹사이트가 상위에 노출되도록 최적화하는 작업.", "detail": "Search Engine Optimization"}, {"term": "Semantic Tag", "short": "태그 이름 자체가 의미를 가지는 HTML 태그, 브라우저와 검색엔진이 콘텐츠 구조를 이해할 수 있게 만듦.", "detail": "<head>, <body> 여러 태그 안에서 가능."}, {"term": "UTF-8", "short": "유니코드(한글)", "detail": ""}, {"term": "EUC-KR", "short": "한글을 2바이트(2byte)로 표현하는 완성형 인코딩 방식(=CP949)", "detail": ""}, {"term": "Box Model", "short": "HTML 모든 요소가 content → padding → border → margin 4겹 구조로 이루어진 박스 형태라는 개념", "detail": ""}, {"term": "CDN", "short": "콘텐츠 전송 네트워크. 전세계에 서버를 뿌려놓고 파일을 빠르게 전달해주는 네트워크.", "detail": "Contents delivery network."}, {"term": "Cloud Service Provider", "short": "클라우드 서비스 프로바이더. 대표적인 서비스 예 : AWS, GCP, Azure", "detail": ""}, {"term": "WAS", "short": "Web Application Server. 자바 기반", "detail": "Web Application Server."}, {"term": "ARIA", "short": "웹접근성의 핵심요소. HTML 요소에 접근성을 위한 디테일한 레이블, 정보 속성을 추가하는 집합.", "detail": "Accessible Rich Internet Applications."}, {"term": "RAG", "short": "나만의 파일들을 긁어와서 첨부하고 이를 기반으로 검색, 생성하여 답을 생성하는 AI", "detail": ""}, {"term": "TTS", "short": "Text-to-speech, 텍스트를 분석해 인간의 목소리로 변환하는 음성합성 기술.", "detail": ""}, {"term": "스니팻", "short": "Snippet, 작은 코드의 조각", "detail": ""}, {"term": "빌트인함수", "short": "import 하지 않아도 호출할 수 있는 기본적으로 포함되어있는 내장함수, 코드 작성의 효율성을 높여줌", "detail": "print(), len(). type()"}, {"term": "외부모듈", "short": "기본 제공되지 않고, 제3자가 개발하여 배포하는 라이브러리. pip install 명령어로 설치. import로 가져와 활용", "detail": "PyPI(Python Package Index)에서 설치"}, {"term": "OSI 7 계층", "short": "네트워크 통신을 7단계로 나눈 표준 모델", "detail": ""}, {"term": "인증", "short": "사용자의 신원을 확인하는 과정. 아이디, 비밀번호를 통해 이 사용자가 누구인지 검증한다.", "detail": ""}, {"term": "인가", "short": "인증된 사용자가 특정 자원이나 기능에 접근할 권한이 있는지 확인하는 과정. 신원 확인 후 이 사용자가 어디까지 접근 가능한지 결정한다.", "detail": ""}, {"term": "쿠키세션", "short": "HTTP는 기본적으로 요청이 끝나면 상태를 기억 못함 그래서 로그인 유지를 위해 쿠키/세션을 써요.", "detail": "데이터를 브라우저에 저장."}, {"term": "JWT", "short": "JSON Web Token, 서버가 상태를 저장 안해도 되는 인증방식. 로그인 정보를 서버가 아닌 토큰 안에 담아서 클라이언트에게 줌.", "detail": "header(암호화 방식), payload(유저 정보), signature(위조 방지 서명)"}, {"term": "serialize", "short": "문자열로 쭈루룩 연속적으로 보내는것, 직렬화.", "detail": ""}, {"term": "V-model", "short": "폭포수 모델의 변형. 테스트 단계를 확장하여 테스트 단계가 분석및 설계와 어떻게 관련되어 있는지를 표현. 각 개발 단계 검증에 초점. 오류 감소", "detail": ""}, {"term": "HMAC", "short": "쿠키에 들어간 세션 데이터가 사용자가 마음대로 바꾼 값인지 아닌지 확인하는 역할", "detail": "Hash-based Message Authentication Code"}, {"term": "SSL", "short": "웹 브라우저와 서버 간에 전송되는 데이터를 암호화하여 해킹이나 정보 유출을 막아주는 핵심 인터넷 보안 기술", "detail": "Secure Socket Layer, Netscape navigator에서 만듦."}, {"term": "Cocurrency", "short": "동시성. 여러 작업을 서버가 동시에 어떻게 처리할지에 관한 대답.", "detail": ""}, {"term": "Race condition", "short": "두 작업이 동시에 같은 데이터를 건드릴 때 생기는 문제.", "detail": ""}, {"term": "멀티 스레드", "short": "하나의 프로그램이 여러 작업을 동시에 실행하는 방식. 같은 데이터를 여러 스레드가 건드리면 Race condition 발생할 수 있음.", "detail": ""}, {"term": "Full scan", "short": "비효율적인 검색(모든 데이터를 찾아야하는)", "detail": ""}, {"term": "Sorting", "short": "정렬. 원하는 곳으로 빠르게 가서 데이터를 찾을 수 있음.", "detail": "너무 많으면 DB 자체의 용량이 커짐. 적절한 Trade-off 를 찾아서 딱 필요한 것만 인덱스."}, {"term": "Index", "short": "빠르게 검색하기 위한 테이블. Create Index 이름.", "detail": ""}, {"term": "Data Base", "short": "Collection of related Information", "detail": ""}, {"term": "CRUD", "short": "Create, Read, Update, Delete. 데이터를 다루는 4가지 기본동작의 약어", "detail": ""}, {"term": "Bash", "short": "리눅스, 맥 터미널에서 실행되는 스크립트 언어. 파일관리, 서버자동화, 반복 작업 등을 명령어로 처리할 때 사용. .sh 확장자 사용", "detail": ""}, {"term": "Perl", "short": "1987년에 만들어진 스크립트 언어. 텍스트 처리와 정규표현식에 강점이 있어 과거 서버 사이드 웹 개발과 로그 분석에 많이 쓰였음.", "detail": ""}, {"term": "PHP", "short": "웹 서버에 실행되는 서버사이드 언어. HTML 안에 코드를 직접 삽입할 수 있어 웹 개발에 특화되어있음. 워드프레스, 페이스북 초기버전이 이걸로 만들어짐.", "detail": ""}, {"term": "Java", "short": "한 번 작성하면 어디서든 실행된다 (Write Once, Run Anywhere)\"는 철학 JVM 위에서 실행되어 운영체제에 독립적. 대규모 기업 서버, 안드로이드 앱 개발에 주사용.", "detail": ""}], "SW공학": [{"term": "GW-BASIC", "short": "1980년대 인기를 끌었던 프로그래밍 입문용 언어.", "detail": "1980년대 후반 MS-DOS 환경에서 인기를 끌었던 마이크로소프트의 인터프리터 방식 프로그래밍 언어"}, {"term": "Git", "short": "코드가 보관되는 폴더인 저장소를 관리하는 프로그램(분산 버전 관리 시스템 프로그램)", "detail": ""}, {"term": "SDLC", "short": "소프트웨어 개발 수명주기. 소프트웨어 개발의 효율성과 품질을 높이기 위해 체계적으로 설계된 프로세스", "detail": "Software Development Life Cycle, 고품질 소프트웨어를 최소 비용과 시간으로 개발하기 위해 기획, 설계, 구현, 테스트, 배포, 유지보수의 단계를 구조화한 방법론"}, {"term": "SRS", "short": "소프트웨어 요구사항 명세서, 개발할 SW의 기능, 성능, 제약조건을 정의한 문서로 프로젝트의 핵심 지침서.", "detail": "Software Requirement Specification."}, {"term": "SDD", "short": "AI 시대에 코드보다 명세를 먼저 정의하고 이를 바탕으로 AI 에이전트가 코드를 생성/검증하는 현대적 개발 방법론", "detail": "Spec-Driven Development."}, {"term": "STS", "short": "스프링 프레임워크 기반의 자바 애플리케이션 개발을 위한 이클립스(Eclipse) 기반의 오픈소스 IDE", "detail": "Spring Tool Suite. Java/Spring 기반의 웹 서비스, 애플리케이션 구축."}, {"term": "TDDD", "short": "데이터베이스 테스트 주도 개발(Test-Driven Database Development) 방법론", "detail": "제적(prior) 테스트를 도출하여 작성한 후, 실제적인 구현 착수보다 우선하는 소프트웨어 개발 방법론."}, {"term": "Regression Testing", "short": "회귀 테스트, 코드 수정으로 인해 기존 기능이 손상되지 않거나 새로운 버그가 발생하지 않는지 확인하는 데 사용되는 SW 테스트 전략", "detail": "소프트웨어의 기능 추가, 변경, 버그 수정 후, 기존에 잘 작동하던 기능에 회귀 버그가 발생했는지 확인하는 재테스트 기법"}, {"term": "CI/CD", "short": "개발자가 코드를 공유 저장소에 자주 반영(CI)하고, 자동화된 테스트 및 빌드(CD)", "detail": "지속적 통합(Continuous Integration)과 지속적 제공/배포(Continuous Delivery/Deployment)를 결합한 자동화 프로세스"}, {"term": "Kubernetes", "short": "k8s, 컨테이너화된 애플리케이션의 배포, 확장, 관리를 자동화하는 오픈소스 플랫폼", "detail": "쿠버네티스. 도커 등 컨테이너화된 애플리케이션의 배포, 확장, 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼"}, {"term": "I18N", "short": "소프트웨어를 다양한 언어, 지역, 문화권 환경에 맞춰 쉽게 적응할 수 있도록 설계하는 개발 과정", "detail": "Internationalization. 텍스트 번역뿐만 아니라 날짜/숫자 형식, 화폐, UI 방향(RTL) 등을 사용자 환경에 맞게 최적화."}, {"term": "UV", "short": "빠르고 현대적인 Python 프로젝트/패키지 매니저. 가상환경과 의존성 설치를 빠르게 처리할 수 있도록 만든 CLI툴", "detail": "주로 Conda와 비교됨."}, {"term": "SVN", "short": "중앙집중식 버전관리 시스템, 코드 변경 이력 관리하고 협업할 수 있게 해줌.", "detail": "Subversion, 서버에만 존재. 오프라인 작업 불가능, 브랜치 무거움. 속도 느려서 레거시 시스템 형상관리용으로 사용."}, {"term": "Remote Repository", "short": "원격저장소, 로컬이 아닌 서버에 있는 코드 저장소.", "detail": "GitHub, GitLab, Bitbucket 같은 곳이 대표적. 팀원들이 코드를 PUSH(올리고)/PULL(받아서) 함께 협업하는 공간"}, {"term": "Local Repository", "short": "내 PC에 있는 작업 폴더 + 변경 이력 저장소, 코드파일이나 수정기록도 저장됨.", "detail": "로컬저장소"}, {"term": "linefeed", "short": "리눅스 - 줄바꿈", "detail": ""}, {"term": "carriage return", "short": "윈도우 - 줄바꿈", "detail": ""}, {"term": "Markdown", "short": "간단한 기호로 서식 있는 문서를 작성하는 경량 마크업 언어", "detail": "# (제목), * (강조), - (목록) 등 직관적 문법. HTML로 변환 가능. GitHub README, 블로그, 기술 문서 작성에 널리 사용됨"}, {"term": "스니팻", "short": "Snippet, 작은 코드의 조각", "detail": ""}, {"term": "빌트인함수", "short": "import 하지 않아도 호출할 수 있는 기본적으로 포함되어있는 내장함수, 코드 작성의 효율성을 높여줌", "detail": "print(), len(). type()"}, {"term": "외부모듈", "short": "기본 제공되지 않고, 제3자가 개발하여 배포하는 라이브러리. pip install 명령어로 설치. import로 가져와 활용", "detail": "PyPI(Python Package Index)에서 설치"}, {"term": "serialize", "short": "문자열로 쭈루룩 연속적으로 보내는것, 직렬화.", "detail": ""}, {"term": "V-model", "short": "폭포수 모델의 변형. 테스트 단계를 확장하여 테스트 단계가 분석및 설계와 어떻게 관련되어 있는지를 표현. 각 개발 단계 검증에 초점. 오류 감소", "detail": ""}, {"term": "Perl", "short": "1987년에 만들어진 스크립트 언어. 텍스트 처리와 정규표현식에 강점이 있어 과거 서버 사이드 웹 개발과 로그 분석에 많이 쓰였음.", "detail": ""}], "FE": [{"term": "JavaScript", "short": "프로그래밍 언어, 웹 페이지를 동적으로 만들고 서버까지 개발할 수 있는 멀티 패러다임 프로그래밍 언어.", "detail": "객체 기반의 스크립트 언어로 HTML/CSS와 함께 프론트앤드 필수기술"}, {"term": "HTML", "short": "웹 브라우저에 표시되도록 설계된 표준 마크업 언어.", "detail": "HyperText Markup Language, 제목, 단락, 목록 등 본문을 위한 구조적 의미 표현 뿐만 아니라 링크, 인용 그밖의 구조적 문서를 만들 수 있는 방법 제공."}, {"term": "CSS", "short": "마크업 언어가 실제 표시되는 방법을 기술하는 스타일 언어.", "detail": "Cascading Style Sheets."}, {"term": "React.js", "short": "자바스크립트 라이브러리의 하나로서 사용자 인터페이스를 만들기 위해 사용된다.", "detail": "보통 라우팅, API통신 등의 기능이 요구되는데 리액트에는 기본적으로 제공되지 않기 때문에 추가 라이브러리를 사용해야 한다.(2021-11기준)"}, {"term": "Local Storage", "short": "웹 브라우저가 제공하는 클라이언트 측 데이터 장소(서버가 아닌, 사용자 브라우저에 데이터 저장)", "detail": "브라우저에 데이터를 영구적으로 저장하며, Session Storage처럼 탭을 닫아도 데이터가 사라지지 않음."}, {"term": "HypeText", "short": "링크를 통해 다른 문서로 이동할 수 있는 비선형적 텍스트", "detail": "클릭 한 번으로 연관 문서로 이동하는 구조. HTML의 'HT'가 HyperText의 약자이며, 웹의 핵심 개념"}, {"term": "Anchor tab", "short": "A tab. HTML에서 하이퍼링크를 만드는 태그", "detail": "<a href='URL'>텍스트<\/a> 형태로 사용. href로 이동 경로 지정, target='_blank'로 새 탭 열기 가능. 페이지 내 특정 위치(앵커)로 이동도 가능"}, {"term": "XML", "short": "데이터를 태그로 구조화하여 저장·전송하는 마크업 언어", "detail": "eXtensible Markup Language. 태그를 사용자가 직접 정의 가능. 시스템 간 데이터 교환에 사용되나 JSON 대비 무거움. 레거시 시스템·공공 API·문서 표준에서 여전히 활용"}, {"term": "DOM", "short": "문서 객체 모델로 웹 페이지를 스크립트 또는 프로그래밍 언어와 연결", "detail": "Document Object Model."}, {"term": "웹접근성", "short": "장애 여부, 나이, 환경에 상관없이 누구나 웹을 동등하게 이용할 수 있도록 만드는 것.", "detail": "대표적으로 이미지에 alt 추가(시각장애인 정보제공 고려)"}, {"term": "SEO", "short": "검색엔진 최적화, 검색결과에서 내 웹사이트가 상위에 노출되도록 최적화하는 작업.", "detail": "Search Engine Optimization"}, {"term": "Semantic Tag", "short": "태그 이름 자체가 의미를 가지는 HTML 태그, 브라우저와 검색엔진이 콘텐츠 구조를 이해할 수 있게 만듦.", "detail": "<head>, <body> 여러 태그 안에서 가능."}, {"term": "Box Model", "short": "HTML 모든 요소가 content → padding → border → margin 4겹 구조로 이루어진 박스 형태라는 개념", "detail": ""}, {"term": "ARIA", "short": "웹접근성의 핵심요소. HTML 요소에 접근성을 위한 디테일한 레이블, 정보 속성을 추가하는 집합.", "detail": "Accessible Rich Internet Applications."}], "BE": [{"term": "API", "short": "서로 다른 소프트웨어 구성 요소가 데이터를 주고받거나 기능을 활용할 수 있도록 정의된 일련의 규칙과 약속", "detail": "Application Programming interface, 프로그램을 만드는데 필요한 기능을 직접 구현하지 않고 API 제공자들이 공유하는 데이터와 모듈 등을 갖다 쓸 수 있음."}, {"term": "Oauth 2.0", "short": "제3자 애플리케이션에 비밀번호를 넘기지 않고도 특정한 권한만 위임할 수 있게 해주는 인증, 인가 프로토콜", "detail": ""}, {"term": "OpenID Connect", "short": "Oauth 2.0 위에 신원확인(인증) 기능을 추가한 프로토콜", "detail": "Access Token에 ID Token 추가발급"}, {"term": "GET", "short": "데이터를 URL에 담아 요청(조회)", "detail": ""}, {"term": "POST", "short": "데이터를 Body에 담아 요청(전송/저장), URL엔 안보임.", "detail": ""}, {"term": "CDN", "short": "콘텐츠 전송 네트워크. 전세계에 서버를 뿌려놓고 파일을 빠르게 전달해주는 네트워크.", "detail": "Contents delivery network."}, {"term": "Cloud Service Provider", "short": "클라우드 서비스 프로바이더. 대표적인 서비스 예 : AWS, GCP, Azure", "detail": ""}, {"term": "WAS", "short": "Web Application Server. 자바 기반", "detail": "Web Application Server."}, {"term": "인증", "short": "사용자의 신원을 확인하는 과정. 아이디, 비밀번호를 통해 이 사용자가 누구인지 검증한다.", "detail": ""}, {"term": "인가", "short": "인증된 사용자가 특정 자원이나 기능에 접근할 권한이 있는지 확인하는 과정. 신원 확인 후 이 사용자가 어디까지 접근 가능한지 결정한다.", "detail": ""}, {"term": "쿠키세션", "short": "HTTP는 기본적으로 요청이 끝나면 상태를 기억 못함 그래서 로그인 유지를 위해 쿠키/세션을 써요.", "detail": "데이터를 브라우저에 저장."}, {"term": "JWT", "short": "JSON Web Token, 서버가 상태를 저장 안해도 되는 인증방식. 로그인 정보를 서버가 아닌 토큰 안에 담아서 클라이언트에게 줌.", "detail": "header(암호화 방식), payload(유저 정보), signature(위조 방지 서명)"}, {"term": "HMAC", "short": "쿠키에 들어간 세션 데이터가 사용자가 마음대로 바꾼 값인지 아닌지 확인하는 역할", "detail": "Hash-based Message Authentication Code"}, {"term": "PHP", "short": "웹 서버에 실행되는 서버사이드 언어. HTML 안에 코드를 직접 삽입할 수 있어 웹 개발에 특화되어있음. 워드프레스, 페이스북 초기버전이 이걸로 만들어짐.", "detail": ""}, {"term": "Java", "short": "한 번 작성하면 어디서든 실행된다 (Write Once, Run Anywhere)\"는 철학 JVM 위에서 실행되어 운영체제에 독립적. 대규모 기업 서버, 안드로이드 앱 개발에 주사용.", "detail": ""}], "CA": [{"term": "Ontology", "short": "특정 분야에 존재하는 개념이나 관계를 명확하게 정의하고 구조화한 지식 모델", "detail": "기존의 가시적인 데이터 뿐만 아니라 비가시적인 개념까지 표현하는 지식표현방법. 개체, 클래스, 속성, 관계, 제약조건 구성. 의미, 관계를 포함한다는 점에서 경쟁력."}, {"term": "anaconda", "short": "패키지 관리와 디플로이를 단순케 할 목적으로 과학 계산을 위한 Python과 R 프로그래밍 언어의 자유-오픈 소스 배포판", "detail": ""}, {"term": "pip", "short": "Python에서 외부 패키지 모듈들을 설치하고 관리하는 패키지매니저.", "detail": "Python에서 사용가능한 다양한 package들을 설치 및 제거, 즉 관리하는 소프트웨어"}, {"term": "퍼지로직", "short": "참과 거짓이라는 이진 논리에서 벗어나 0~1 사이 연속적인 실수를 사용하여 모호하고 주관적인 정보를 처리하는 수학적 도구", "detail": "가전제품 제어, AI 등 복잡하고 불확실한 데이터를 다루는 시스템에 활용됨."}, {"term": "NLP", "short": "자연어처리. 인공지능의 하위분야로 컴퓨터가 인간의 언어를 이해, 해석, 생성 및 조작할 수 있도록 하는 기술", "detail": "Natural Language Processing. LLM과 달리 언어의 이해와 특정 작업(분석)에 중점을 둠. 분석기술로 워드투벡, BERT, GPT"}, {"term": "LLM", "short": "대규모 언어 모델, 인간의 언어를 이해하고 생성하는 데 사용되는 인공지능모델.", "detail": "Large Language Model. NLP와 달리 대규모 데이터를 기반으로 새로운 텍스트를 생성하는 데 더 특화되어있음."}, {"term": "NER", "short": "명명된 엔티티 인식. 텍스트 내에서 이인명, 지명, 기관명과 같은 특정한 정보를 가진 단어나 구를 식별하고 분류한다.", "detail": "Named Entity Recognition. NLP를 위한."}, {"term": "코사인유사도", "short": "두 벡터 간의 유사도를 각도로 측정하는 방법, -1~1 사이 값으로 표현", "detail": "벡터의 크기가 아닌 방향의 유사성을 측정. 값이 1에 가까울수록 유사, 0이면 무관, -1이면 반대. NLP에서 문장/단어 유사도 비교에 활용"}, {"term": "RNN", "short": "순환 신경망. 이전 단계 출력을 다음 입력으로 활용하여 순서 있는 데이터를 처리하는 신경망", "detail": "Recurrent Neural Network. 텍스트, 시계열 등 순차 데이터 처리에 적합. 장기 의존성 문제(기울기 소실)가 있어 LSTM, GRU로 발전. Transformer 등장 후 주류에서 밀림"}, {"term": "Transformer", "short": "어텐션 메커니즘 기반 딥러닝 모델 구조로 현대 LLM의 근간", "detail": "문장을 만들어내는 알고리즘. 'Attention is All You Need'에서 제안. 병렬 처리가 가능해 RNN보다 학습 속도가 빠르며, GPT·BERT 등 모든 현대 LLM의 기반 구조"}, {"term": "토큰화", "short": "텍스트를 모델이 처리할 수 있는 최소 단위(토큰)로 분리하는 과정", "detail": "단어·서브워드·문자 단위로 분리. LLM은 토큰 단위로 텍스트를 이해·생성하며, 한국어는 영어 대비 토큰 효율이 낮은 편"}, {"term": "입력 임베딩", "short": "토큰을 고차원 벡터로 변환하여 의미를 수치화하는 과정", "detail": "의미가 유사한 단어는 벡터 공간에서 가까이 위치. Transformer의 첫 번째 처리 단계로, 이후 어텐션 연산의 입력값이 됨"}, {"term": "TOP-K", "short": "AI가 다음 단어 생성 시 상위 K개 후보만 고려하여 선택하는 샘플링 방식", "detail": "AI가 고려하는 후보 단어의 수를 직접 제한하는 방식"}, {"term": "TOP-P", "short": "누적 확률이 P(%)가 될 때까지 후보 단어를 포함하여 선택하는 샘플링 방식", "detail": "특정 확률 퍼센테이지가 될 때까지 AI가 단어의 수를 뽑기"}, {"term": "ChatGPT", "short": "OpenAI가 GPT 모델 기반으로 만든 대화형 AI 서비스", "detail": "GPT-3.5, GPT-4 기반에 RLHF로 미세조정하여 자연스러운 대화가 가능하도록 한 챗봇."}, {"term": "RLHF", "short": "인간의 피드백을 강화학습에 결합하여 AI 모델을 정렬(Alignment)하는 기법", "detail": "인간이 선호하는 답변에 보상을 주어 모델을 미세조정하는 방식"}, {"term": "CoT", "short": "복잡한 추론이 필요할 때 단계별로 생각해보기를 추가하여 검증", "detail": "LLM이 복잡한 문제에 답을 내리기 전 중간 사고 단계를 명시적으로 표현하도록 유도하는 prompting 전략"}, {"term": "GPT", "short": "OpenAI가 개발한 대규모 사전학습 언어 모델", "detail": "Generative Pre-trained Transformer. 다양한 데이터로 학습시킨 것, 가장 유사한 단어들의 후보군 중에서 확률 기반 랜덤."}, {"term": "RAG", "short": "나만의 파일들을 긁어와서 첨부하고 이를 기반으로 검색, 생성하여 답을 생성하는 AI", "detail": ""}, {"term": "TTS", "short": "Text-to-speech, 텍스트를 분석해 인간의 목소리로 변환하는 음성합성 기술.", "detail": ""}], "OS": [{"term": "PATH environment variable", "short": "Path 환경변수. 운영체제가 명령어를 찾을 때 탐색하는 디렉토리 목록", "detail": ""}, {"term": "path", "short": "특정한 파일이 있는 위치를 나타내는 주소", "detail": ""}, {"term": "UTF-8", "short": "유니코드(한글)", "detail": ""}, {"term": "EUC-KR", "short": "한글을 2바이트(2byte)로 표현하는 완성형 인코딩 방식(=CP949)", "detail": ""}, {"term": "Cocurrency", "short": "동시성. 여러 작업을 서버가 동시에 어떻게 처리할지에 관한 대답.", "detail": ""}, {"term": "Race condition", "short": "두 작업이 동시에 같은 데이터를 건드릴 때 생기는 문제.", "detail": ""}, {"term": "멀티 스레드", "short": "하나의 프로그램이 여러 작업을 동시에 실행하는 방식. 같은 데이터를 여러 스레드가 건드리면 Race condition 발생할 수 있음.", "detail": ""}, {"term": "Bash", "short": "리눅스, 맥 터미널에서 실행되는 스크립트 언어. 파일관리, 서버자동화, 반복 작업 등을 명령어로 처리할 때 사용. .sh 확장자 사용", "detail": ""}], "NW": [{"term": "HTTP", "short": "웹 브라우저(클라이언트)와 서버가 HTML, 이미지 등 데이터를 교환하기 위한 규칙, 프로토콜.", "detail": "Hypertext Transfer Protocol, 사용자가 링크를 클릭하면 브라우저가 서버에 데이터를 요청(Request)하고, 서버가 응답(Response)하여 웹 페이지를 보여주는 방식"}, {"term": "HTTPS", "short": "웹 브라우저와 서버 간의 데이터를 암호화하여 전송하는 안전한 통신 규약", "detail": "Hypertext Transfer Protocol Secure, SSL/TLS 인증서를 사용하여 통신을 암호화하고 서버를 인증함으로써 중간자 공격, 데이터 변조 및 도청을 방지."}, {"term": "MFA", "short": "두 가지 이상의 서로 다른 인증 유형을 조합해 신원을 확인하는 방식", "detail": "multi-factor authentication. type 1+type 2, type2+type3, type3+type1 구성. 같은 유형끼리 조합은 MFA로 인정 안 됨."}, {"term": "2FA", "short": "MFA의 가장 흔한 형태로, 정확히 두 가지 인증 요소를 사용하는 방식", "detail": "two factor authentication, id/pw + otp"}, {"term": "SSH", "short": "네트워크를 통해 원격 서버에 안전하게 접속하기 위한 암호화 프로토콜", "detail": "secure shell, 주로 TCP 포트 22를 사용하여 클라이언트와 서버 간의 암호화된 터널을 생성합니다."}, {"term": "RSA", "short": "공개키(비대칭키) 암호화 알고리즘으로 가장 많이 씀", "detail": "리베스트-샤미르-애들먼 앞이름따서 지음. 소수(프라임넘버)라서 가능함. 작은 수는 복잡하지 않지만 큰 수로 가면 어마어마해짐."}, {"term": "PKI", "short": "공개키(비대칭키) 기반 구조", "detail": "항상 동일키, 이미 모두 공유됨."}, {"term": "SSH-keygen", "short": "공개키(삐대칭키) 알고리즘 기반의 SSH 키 쌍(공개키+개인키)을 생성하는 도구.", "detail": "일부 레거시 시스템이 패스워드 인증에 머물러있어서 국내에선 상대적으로 덜 씀."}, {"term": "type1", "short": "지식 기반 인증 (사용자가 알고 있는 것)", "detail": "id/pw, PIN 등 사용자가 머릿속에 기억하는 정보로 인증"}, {"term": "type2", "short": "소유 기반 인증 (사용자가 가지고 있는 것)", "detail": "OTP 기기, 스마트카드, 휴대폰 등 물리적 소유물로 인증"}, {"term": "type3", "short": "존재 기반 인증 (사용자의 신체적 특성)", "detail": "지문, 홍채, 얼굴인식 등 생체정보로 인증. FIDO 프로토콜이 대표적"}, {"term": "FIDO", "short": "생체인증에 쓰이는 대표 프로토콜,", "detail": "Fast IDentity Online. FIDO2는 WebAuthn 포함. 피싱에 강하고 비밀번호 없는 인증(Passwordless) 구현 가능. type3 인증의 대표 구현체"}, {"term": "TCP", "short": "전송제어 프로토콜. 컴퓨터가 다른 컴퓨터와 데이터 통신을 하기 위한 다중화 규약", "detail": "Transmission Control Protocol. 3-way handshake로 연결 후 패킷 순서 보장·재전송 처리. HTTP/HTTPS의 기반. 속도보다 신뢰성이 중요한 곳에 사용"}, {"term": "UDP", "short": "사용자 데이터그램 프로토콜. 비연결형 전송 프로토콜로 신뢰성보다 속도를 우선시", "detail": "User Datagram Protocol. 연결 설정 없이 데이터 전송. 패킷 손실 가능하지만 빠름. 스트리밍, 온라인 게임, DNS, VoIP 등에 활용"}, {"term": "URI Schema", "short": "어떤 방식으로 리소스에 접근할지 정의하는 규칙.", "detail": ""}, {"term": "OSI 7 계층", "short": "네트워크 통신을 7단계로 나눈 표준 모델", "detail": ""}, {"term": "SSL", "short": "웹 브라우저와 서버 간에 전송되는 데이터를 암호화하여 해킹이나 정보 유출을 막아주는 핵심 인터넷 보안 기술", "detail": "Secure Socket Layer, Netscape navigator에서 만듦."}], "DB": [{"term": "Full scan", "short": "비효율적인 검색(모든 데이터를 찾아야하는)", "detail": ""}, {"term": "Sorting", "short": "정렬. 원하는 곳으로 빠르게 가서 데이터를 찾을 수 있음.", "detail": "너무 많으면 DB 자체의 용량이 커짐. 적절한 Trade-off 를 찾아서 딱 필요한 것만 인덱스."}, {"term": "Index", "short": "빠르게 검색하기 위한 테이블. Create Index 이름.", "detail": ""}, {"term": "Data Base", "short": "Collection of related Information", "detail": ""}, {"term": "CRUD", "short": "Create, Read, Update, Delete. 데이터를 다루는 4가지 기본동작의 약어", "detail": ""}]};
+    const categories = Object.keys(WORDS);
+    const totalCount = categories.reduce((sum, key) => sum + WORDS[key].length, 0);
+    document.getElementById('totalCount').textContent = totalCount;
+
+    let mode = 'termToDesc';
+    let currentCategory = null;
+    let deck = [];
+    let index = 0;
+    let score = 0;
+    let answered = false;
+    let current = null;
+
+    const home = document.getElementById('home');
+    const quiz = document.getElementById('quiz');
+    const grid = document.getElementById('categoryGrid');
+    const optionsEl = document.getElementById('options');
+    const answerBox = document.getElementById('answerBox');
+    const nextBtn = document.getElementById('nextBtn');
+    const reviewArea = document.getElementById('reviewArea');
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function pickOptions(correct, pool, count = 4) {
+      const wrongs = shuffle(pool.filter(item => item.term !== correct.term)).slice(0, count - 1);
+      return shuffle([correct, ...wrongs]);
+    }
+
+    function getText(item) {
+      return item.short || item.detail || '설명이 비어 있어요.';
+    }
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+    }
+
+    function renderHome() {
+      grid.innerHTML = '';
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'category-btn';
+        btn.innerHTML = `<div class="cat-name">${escapeHTML(cat)}</div><div class="cat-count">${WORDS[cat].length}개 단어</div>`;
+        btn.addEventListener('click', () => startQuiz(cat));
+        grid.appendChild(btn);
+      });
+    }
+
+    document.querySelectorAll('.mode').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        mode = btn.dataset.mode;
+      });
+    });
+
+    function startQuiz(cat) {
+      currentCategory = cat;
+      deck = shuffle(WORDS[cat]);
+      index = 0;
+      score = 0;
+      home.classList.add('hidden');
+      quiz.classList.remove('hidden');
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      answered = false;
+      nextBtn.classList.add('hidden');
+      answerBox.classList.add('hidden');
+      answerBox.innerHTML = '';
+      optionsEl.innerHTML = '';
+
+      if (index >= deck.length) {
+        renderFinish();
+        return;
+      }
+
+      current = deck[index];
+      const progress = Math.round((index / deck.length) * 100);
+      document.getElementById('bar').style.width = progress + '%';
+      document.getElementById('catStat').textContent = `${currentCategory} · ${index + 1}/${deck.length}`;
+      document.getElementById('scoreStat').textContent = `정답 ${score} / ${index}`;
+      document.getElementById('leftStat').textContent = `남은 문제 ${deck.length - index}`;
+
+      const qTerm = document.getElementById('qTerm');
+      const qDesc = document.getElementById('qDesc');
+      const qLabel = document.getElementById('qLabel');
+
+      if (mode === 'termToDesc') {
+        qLabel.textContent = '이 단어의 뜻은?';
+        qTerm.textContent = current.term;
+        qTerm.classList.remove('hidden');
+        qDesc.classList.add('hidden');
+      } else {
+        qLabel.textContent = '이 설명에 해당하는 단어는?';
+        qDesc.textContent = getText(current);
+        qDesc.classList.remove('hidden');
+        qTerm.classList.add('hidden');
+      }
+
+      const pool = WORDS[currentCategory].length >= 4 ? WORDS[currentCategory] : WORDS['공통'];
+      pickOptions(current, pool).forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerHTML = mode === 'termToDesc' ? escapeHTML(getText(item)) : escapeHTML(item.term);
+        btn.addEventListener('click', () => choose(btn, item));
+        optionsEl.appendChild(btn);
+      });
+      renderWrongNote();
+    }
+
+    function choose(btn, selected) {
+      if (answered) return;
+      answered = true;
+      const isCorrect = selected.term === current.term;
+      if (isCorrect) score++;
+      [...optionsEl.children].forEach(child => {
+        const text = child.textContent.trim();
+        const isAnswer = mode === 'termToDesc' ? text === getText(current) : text === current.term;
+        if (isAnswer) child.classList.add('correct');
+      });
+      if (!isCorrect) {
+        btn.classList.add('wrong');
+        saveWrong(currentCategory, current);
+      }
+      answerBox.classList.remove('hidden');
+      answerBox.innerHTML = `
+        <div class="answer-title">${isCorrect ? '정답!' : '오답'} — ${escapeHTML(current.term)}</div>
+        <div class="answer-detail">${escapeHTML(getText(current))}</div>
+        ${current.detail && current.detail !== current.short ? `<div class="answer-detail" style="margin-top:8px;">${escapeHTML(current.detail)}</div>` : ''}
+      `;
+      index++;
+      document.getElementById('scoreStat').textContent = `정답 ${score} / ${index}`;
+      document.getElementById('leftStat').textContent = `남은 문제 ${deck.length - index}`;
+      document.getElementById('bar').style.width = Math.round((index / deck.length) * 100) + '%';
+      nextBtn.classList.remove('hidden');
+      renderWrongNote();
+    }
+
+    function renderFinish() {
+      document.getElementById('qLabel').textContent = '퀴즈 완료';
+      document.getElementById('qTerm').classList.remove('hidden');
+      document.getElementById('qTerm').textContent = `${score} / ${deck.length}개 정답`;
+      document.getElementById('qDesc').classList.add('hidden');
+      optionsEl.innerHTML = '';
+      answerBox.classList.remove('hidden');
+      answerBox.innerHTML = `<div class="answer-title">수고했어요.</div><div class="answer-detail">같은 카테고리를 다시 누르면 새 랜덤 순서로 시작합니다.</div>`;
+      nextBtn.classList.add('hidden');
+      document.getElementById('bar').style.width = '100%';
+      document.getElementById('scoreStat').textContent = `정답 ${score} / ${deck.length}`;
+      document.getElementById('leftStat').textContent = '남은 문제 0';
+      renderWrongNote();
+    }
+
+    function wrongKey() { return 'itWordQuizWrong_v1'; }
+    function loadWrong() {
+      try { return JSON.parse(localStorage.getItem(wrongKey())) || []; } catch { return []; }
+    }
+    function saveWrong(cat, item) {
+      const list = loadWrong();
+      const key = cat + '::' + item.term;
+      const exists = list.some(x => x.key === key);
+      if (!exists) {
+        list.unshift({ key, cat, term: item.term, short: getText(item), time: new Date().toISOString() });
+        localStorage.setItem(wrongKey(), JSON.stringify(list.slice(0, 30)));
+      }
+    }
+    function renderWrongNote() {
+      const list = loadWrong();
+      if (!list.length) { reviewArea.innerHTML = '오답노트가 비어 있어요. 틀린 문제는 이 브라우저에 자동 저장됩니다.'; return; }
+      reviewArea.innerHTML = `<b>최근 오답노트</b><div class="review-list">${list.slice(0, 5).map(x => `<div class="review-item"><strong>${escapeHTML(x.term)} <span style="color:var(--muted);font-weight:600;">(${escapeHTML(x.cat)})</span></strong><span>${escapeHTML(x.short)}</span></div>`).join('')}</div>`;
+    }
+
+    nextBtn.addEventListener('click', renderQuestion);
+    document.getElementById('restartBtn').addEventListener('click', () => startQuiz(currentCategory));
+    document.getElementById('backBtn').addEventListener('click', () => { quiz.classList.add('hidden'); home.classList.remove('hidden'); });
+    document.getElementById('resetWrongBtn').addEventListener('click', () => { localStorage.removeItem(wrongKey()); renderWrongNote(); });
+
+    renderHome();
+  </script>
+</body>
+</html>
